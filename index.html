@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hand Clash</title>
+<style>
+  :root{
+    --steel-dark:#14161a;
+    --steel:#1e2126;
+    --steel-line:#3a3f47;
+    --steel-light:#8b93a1;
+    --brass:#c69a54;
+    --brass-bright:#e0b978;
+    --bone:#ece7db;
+    --rust:#9a4c3c;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(198,154,84,0.08), transparent),
+      linear-gradient(180deg, var(--steel-dark), #0e1013 80%);
+    color:var(--bone);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex;
+    justify-content:center;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .stage{
+    width:100%;
+    max-width:640px;
+    padding:32px 24px 48px;
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    border-bottom:1px solid var(--steel-line);
+    padding-bottom:18px;
+  }
+
+  .lockup h1{
+    font-family:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+    font-size:2.1rem;
+    letter-spacing:0.5px;
+    margin:0;
+    color:var(--bone);
+  }
+  .lockup h1 span{ color:var(--brass); }
+  .lockup p{
+    margin:4px 0 0;
+    font-size:0.85rem;
+    color:var(--steel-light);
+    max-width:26ch;
+  }
+
+  .scoreplate{
+    display:flex;
+    gap:18px;
+    text-align:right;
+  }
+  .scoreplate div{ min-width:44px; }
+  .scoreplate .n{
+    font-family:Georgia,serif;
+    font-size:1.6rem;
+    color:var(--brass-bright);
+    line-height:1;
+  }
+  .scoreplate .l{
+    font-size:0.68rem;
+    color:var(--steel-light);
+    margin-top:2px;
+  }
+
+  /* ---------- Arena ---------- */
+  .arena{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    padding:36px 0;
+    gap:0;
+  }
+
+  .pads{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0;
+    width:100%;
+  }
+
+  .pad{
+    width:132px;
+    height:132px;
+    border-radius:50%;
+    border:2px solid var(--steel-line);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:radial-gradient(circle at 35% 30%, #22262c, #17191d);
+    position:relative;
+    transition:border-color .25s, box-shadow .35s, transform .35s;
+  }
+  .pad.active{
+    border-color:var(--brass);
+    box-shadow:0 0 26px rgba(198,154,84,0.28);
+  }
+  .pad svg{ width:64px; height:64px; }
+
+  .pad.you{ transform:translateX(18px); }
+  .pad.foe{ transform:translateX(-18px); }
+  .pad.clash-you{ animation:lungeR .5s ease-out; }
+  .pad.clash-foe{ animation:lungeL .5s ease-out; }
+
+  @keyframes lungeR{
+    0%{ transform:translateX(18px); }
+    40%{ transform:translateX(-4px); }
+    100%{ transform:translateX(18px); }
+  }
+  @keyframes lungeL{
+    0%{ transform:translateX(-18px); }
+    40%{ transform:translateX(4px); }
+    100%{ transform:translateX(-18px); }
+  }
+
+  .clashmark{
+    width:40px;
+    height:40px;
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:2;
+  }
+  .clashmark svg{ width:100%; height:100%; }
+
+  .verdict{
+    margin-top:26px;
+    min-height:52px;
+    text-align:center;
+  }
+  .verdict .headline{
+    font-family:Georgia,serif;
+    font-size:1.5rem;
+    letter-spacing:0.5px;
+    opacity:0;
+    transform:translateY(6px);
+    transition:opacity .3s, transform .3s;
+  }
+  .verdict .headline.show{ opacity:1; transform:translateY(0); }
+  .verdict .headline.win{ color:var(--brass-bright); }
+  .verdict .headline.lose{ color:var(--rust); }
+  .verdict .headline.draw{ color:var(--steel-light); }
+  .verdict .sub{
+    font-size:0.82rem;
+    color:var(--steel-light);
+    margin-top:4px;
+    opacity:0;
+    transition:opacity .3s;
+  }
+  .verdict .sub.show{ opacity:1; }
+
+  /* ---------- Choices ---------- */
+  .choices{
+    display:flex;
+    justify-content:center;
+    gap:20px;
+    padding-top:8px;
+    border-top:1px solid var(--steel-line);
+    margin-top:auto;
+    padding-top:28px;
+  }
+
+  .choice{
+    width:76px;
+    height:76px;
+    border-radius:50%;
+    border:1.5px solid var(--steel-line);
+    background:var(--steel);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:border-color .2s, transform .15s, background .2s;
+  }
+  .choice svg{ width:34px; height:34px; }
+  .choice:hover{
+    border-color:var(--brass);
+    transform:translateY(-3px);
+  }
+  .choice:active{ transform:translateY(0) scale(.96); }
+  .choice:disabled{
+    opacity:.4;
+    cursor:default;
+    transform:none;
+  }
+
+  .choicelabel{
+    text-align:center;
+    font-size:0.68rem;
+    color:var(--steel-light);
+    margin-top:8px;
+  }
+
+  .choicewrap{ display:flex; flex-direction:column; align-items:center; }
+
+  footer{
+    text-align:center;
+    font-size:0.7rem;
+    color:#565b63;
+    margin-top:22px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .pad, .pad.clash-you, .pad.clash-foe, .verdict .headline, .verdict .sub, .choice{
+      animation:none !important;
+      transition:none !important;
+    }
+  }
+
+  @media (max-width:420px){
+    .pad{ width:96px; height:96px; }
+    .pad svg{ width:48px; height:48px; }
+    .pad.you{ transform:translateX(10px); }
+    .pad.foe{ transform:translateX(-10px); }
+    .choice{ width:64px; height:64px; }
+    .lockup h1{ font-size:1.6rem; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <header>
+    <div class="lockup">
+      <h1>Hand <span>Clash</span></h1>
+      <p>Best instincts win. Rock, paper, scissors — first to call it takes the round.</p>
+    </div>
+    <div class="scoreplate">
+      <div><div class="n" id="scoreYou">0</div><div class="l">You</div></div>
+      <div><div class="n" id="scoreDraw">0</div><div class="l">Draw</div></div>
+      <div><div class="n" id="scoreFoe">0</div><div class="l">Foe</div></div>
+    </div>
+  </header>
+
+  <div class="arena">
+    <div class="pads">
+      <div class="pad you" id="padYou">
+        <svg id="iconYou" viewBox="0 0 100 100"></svg>
+      </div>
+
+      <div class="clashmark">
+        <svg viewBox="0 0 40 40">
+          <path d="M20 4 L23 17 L36 20 L23 23 L20 36 L17 23 L4 20 L17 17 Z"
+                fill="#c69a54" opacity="0.85"/>
+        </svg>
+      </div>
+
+      <div class="pad foe" id="padFoe">
+        <svg id="iconFoe" viewBox="0 0 100 100"></svg>
+      </div>
+    </div>
+
+    <div class="verdict">
+      <div class="headline" id="verdictHeadline"></div>
+      <div class="sub" id="verdictSub"></div>
+    </div>
+  </div>
+
+  <div class="choices">
+    <div class="choicewrap">
+      <button class="choice" data-move="rock" aria-label="Rock">
+        <svg viewBox="0 0 100 100" fill="none" stroke="#ece7db" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M30 55 C28 40 34 28 46 26 C50 20 60 20 63 27 C68 24 76 27 76 36 C82 38 84 46 80 52 L78 68 C78 78 70 84 58 84 L44 84 C34 84 28 78 28 68 Z"/>
+          <path d="M46 26 L47 46 M54 24 L55 46 M63 27 L64 46 M72 32 L73 48"/>
+        </svg>
+      </button>
+      <div class="choicelabel">Rock</div>
+    </div>
+
+    <div class="choicewrap">
+      <button class="choice" data-move="paper" aria-label="Paper">
+        <svg viewBox="0 0 100 100" fill="none" stroke="#ece7db" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M32 46 L32 26 C32 21 40 21 40 26 L40 50"/>
+          <path d="M40 44 L40 22 C40 17 48 17 48 22 L48 48"/>
+          <path d="M48 46 L48 24 C48 19 56 19 56 24 L56 50"/>
+          <path d="M56 48 L56 30 C56 25 64 25 64 30 L64 58 L66 70 C66 79 58 84 48 84 C38 84 30 78 28 68 L26 54 C25 48 32 46 34 52 L36 58"/>
+        </svg>
+      </button>
+      <div class="choicelabel">Paper</div>
+    </div>
+
+    <div class="choicewrap">
+      <button class="choice" data-move="scissors" aria-label="Scissors">
+        <svg viewBox="0 0 100 100" fill="none" stroke="#ece7db" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M46 30 L66 74"/>
+          <path d="M60 30 L40 74"/>
+          <circle cx="41" cy="78" r="7"/>
+          <circle cx="65" cy="78" r="7"/>
+          <path d="M50 50 L58 46"/>
+        </svg>
+      </button>
+      <div class="choicelabel">Scissors</div>
+    </div>
+  </div>
+
+  <footer>First to a clean read wins the round — scores carry until you reload.</footer>
+</div>
+
+<script>
+(function(){
+  const ICONS = {
+    rock: `<path d="M30 55 C28 40 34 28 46 26 C50 20 60 20 63 27 C68 24 76 27 76 36 C82 38 84 46 80 52 L78 68 C78 78 70 84 58 84 L44 84 C34 84 28 78 28 68 Z" fill="none" stroke="#c69a54" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M46 26 L47 46 M54 24 L55 46 M63 27 L64 46 M72 32 L73 48" fill="none" stroke="#c69a54" stroke-width="4" stroke-linecap="round"/>`,
+    paper: `<path d="M32 46 L32 26 C32 21 40 21 40 26 L40 50" fill="none" stroke="#c69a54" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M40 44 L40 22 C40 17 48 17 48 22 L48 48" fill="none" stroke="#c69a54" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M48 46 L48 24 C48 19 56 19 56 24 L56 50" fill="none" stroke="#c69a54" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M56 48 L56 30 C56 25 64 25 64 30 L64 58 L66 70 C66 79 58 84 48 84 C38 84 30 78 28 68 L26 54 C25 48 32 46 34 52 L36 58" fill="none" stroke="#c69a54" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>`,
+    scissors: `<path d="M46 30 L66 74" fill="none" stroke="#c69a54" stroke-width="4" stroke-linecap="round"/><path d="M60 30 L40 74" fill="none" stroke="#c69a54" stroke-width="4" stroke-linecap="round"/><circle cx="41" cy="78" r="7" fill="none" stroke="#c69a54" stroke-width="4"/><circle cx="65" cy="78" r="7" fill="none" stroke="#c69a54" stroke-width="4"/><path d="M50 50 L58 46" fill="none" stroke="#c69a54" stroke-width="4" stroke-linecap="round"/>`
+  };
+
+  const NAME = { rock:"Rock", paper:"Paper", scissors:"Scissors" };
+  const BEATS = { rock:"scissors", paper:"rock", scissors:"paper" };
+  const LOSES_TO = { rock:"paper", paper:"scissors", scissors:"rock" };
+
+  const iconYou = document.getElementById("iconYou");
+  const iconFoe = document.getElementById("iconFoe");
+  const padYou = document.getElementById("padYou");
+  const padFoe = document.getElementById("padFoe");
+  const headline = document.getElementById("verdictHeadline");
+  const sub = document.getElementById("verdictSub");
+  const scoreYouEl = document.getElementById("scoreYou");
+  const scoreFoeEl = document.getElementById("scoreFoe");
+  const scoreDrawEl = document.getElementById("scoreDraw");
+  const buttons = document.querySelectorAll(".choice");
+
+  let scoreYou = 0, scoreFoe = 0, scoreDraw = 0, locked = false;
+
+  function setIcon(el, move){
+    el.innerHTML = move ? ICONS[move] : "";
+  }
+
+  function decide(you, foe){
+    if (you === foe) return "draw";
+    return BEATS[you] === foe ? "win" : "lose";
+  }
+
+  function play(move){
+    if (locked) return;
+    locked = true;
+    buttons.forEach(b => b.disabled = true);
+
+    headline.className = "headline";
+    sub.className = "sub";
+
+    const foeMove = ["rock","paper","scissors"][Math.floor(Math.random()*3)];
+
+    setIcon(iconYou, move);
+    setIcon(iconFoe, foeMove);
+    padYou.classList.add("active");
+    padFoe.classList.add("active");
+
+    padYou.classList.add("clash-you");
+    padFoe.classList.add("clash-foe");
+
+    setTimeout(() => {
+      const result = decide(move, foeMove);
+
+      if (result === "win"){
+        scoreYou++;
+        headline.textContent = `Yours takes it`;
+        sub.textContent = `${NAME[move]} beats ${NAME[foeMove]}`;
+        headline.classList.add("win");
+      } else if (result === "lose"){
+        scoreFoe++;
+        headline.textContent = `Foe takes it`;
+        sub.textContent = `${NAME[foeMove]} beats ${NAME[move]}`;
+        headline.classList.add("lose");
+      } else {
+        scoreDraw++;
+        headline.textContent = `Even hands`;
+        sub.textContent = `Both called ${NAME[move]}`;
+        headline.classList.add("draw");
+      }
+
+      scoreYouEl.textContent = scoreYou;
+      scoreFoeEl.textContent = scoreFoe;
+      scoreDrawEl.textContent = scoreDraw;
+
+      requestAnimationFrame(() => {
+        headline.classList.add("show");
+        sub.classList.add("show");
+      });
+
+      padYou.classList.remove("clash-you");
+      padFoe.classList.remove("clash-foe");
+
+      setTimeout(() => {
+        buttons.forEach(b => b.disabled = false);
+        locked = false;
+      }, 550);
+
+    }, 480);
+  }
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => play(btn.dataset.move));
+  });
+})();
+</script>
+</body>
+</html>
